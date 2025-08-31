@@ -1,0 +1,208 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: quiz_engine
+      POSTGRES_USER: quiz_user
+      POSTGRES_PASSWORD: quiz_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - quiz_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - quiz_network
+
+  # ChromaDB Vector Database
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    networks:
+      - quiz_network
+
+  # RabbitMQ Message Queue
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: quiz_user
+      RABBITMQ_DEFAULT_PASS: quiz_password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - quiz_network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: docker/api-gateway.Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_URL=http://chromadb:8000
+      - RABBITMQ_URL=amqp://quiz_user:quiz_password@rabbitmq:5672/
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+      - rabbitmq
+    networks:
+      - quiz_network
+    volumes:
+      - ./uploads:/app/uploads
+
+  # Quiz Generation Service
+  quiz-generation:
+    build:
+      context: .
+      dockerfile: docker/quiz-generation.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://quiz_user:quiz_password@rabbitmq:5672/
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - quiz_network
+
+  # RAG Service
+  rag-service:
+    build:
+      context: .
+      dockerfile: docker/rag-service.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - CHROMA_URL=http://chromadb:8000
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - chromadb
+      - redis
+    networks:
+      - quiz_network
+    volumes:
+      - ./uploads:/app/uploads
+
+  # LLM Service
+  llm-service:
+    build:
+      context: .
+      dockerfile: docker/llm-service.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - quiz_network
+
+  # Content Management Service
+  content-management:
+    build:
+      context: .
+      dockerfile: docker/content-management.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - quiz_network
+    volumes:
+      - ./uploads:/app/uploads
+
+  # User Management Service
+  user-management:
+    build:
+      context: .
+      dockerfile: docker/user-management.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - quiz_network
+
+  # Quiz Session Service
+  quiz-session:
+    build:
+      context: .
+      dockerfile: docker/quiz-session.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - quiz_network
+
+  # Celery Worker
+  celery-worker:
+    build:
+      context: .
+      dockerfile: docker/celery-worker.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://quiz_user:quiz_password@postgres:5432/quiz_engine
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://quiz_user:quiz_password@rabbitmq:5672/
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - quiz_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api-gateway
+    networks:
+      - quiz_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  rabbitmq_data:
+
+networks:
+  quiz_network:
+    driver: bridge

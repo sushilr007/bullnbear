@@ -1,0 +1,184 @@
+{
+  "quiz_configurations": {
+    "elementary_math_basic": {
+      "id": "elementary_math_basic",
+      "subject": "Mathematics",
+      "level": "ELEMENTARY",
+      "questionTypes": ["MULTIPLE_CHOICE", "TRUE_FALSE"],
+      "difficulty": "EASY",
+      "questionCount": 10,
+      "timeLimit": 15,
+      "preferredGenerator": "LLM",
+      "scoringMethod": "PERCENTAGE",
+      "passingScore": 70.0,
+      "shuffleQuestions": true,
+      "shuffleOptions": true,
+      "allowPartialCredit": false
+    },
+    
+    "highschool_science_comprehensive": {
+      "id": "highschool_science_comprehensive",
+      "subject": "Science",
+      "level": "HIGH_SCHOOL",
+      "questionTypes": ["MULTIPLE_CHOICE", "SHORT_ANSWER", "TRUE_FALSE"],
+      "difficulty": "MEDIUM",
+      "questionCount": 20,
+      "timeLimit": 45,
+      "preferredGenerator": "HYBRID",
+      "scoringMethod": "WEIGHTED",
+      "passingScore": 75.0,
+      "shuffleQuestions": true,
+      "shuffleOptions": true,
+      "allowPartialCredit": true
+    },
+    
+    "college_literature_essay": {
+      "id": "college_literature_essay",
+      "subject": "Literature",
+      "level": "UNDERGRADUATE",
+      "questionTypes": ["ESSAY", "SHORT_ANSWER"],
+      "difficulty": "HARD",
+      "questionCount": 5,
+      "timeLimit": 90,
+      "preferredGenerator": "RAG",
+      "scoringMethod": "RUBRIC",
+      "passingScore": 80.0,
+      "allowPartialCredit": true,
+      "customSettings": {
+        "require_citations": true,
+        "min_word_count": 200,
+        "rubric_criteria": ["thesis", "evidence", "analysis", "writing_quality"]
+      }
+    },
+    
+    "book_based_biology": {
+      "id": "book_based_biology",
+      "subject": "Biology",
+      "topic": "Cell Biology",
+      "level": "UNDERGRADUATE",
+      "questionTypes": ["MULTIPLE_CHOICE", "SHORT_ANSWER", "FILL_IN_THE_BLANK"],
+      "difficulty": "MEDIUM",
+      "questionCount": 15,
+      "timeLimit": 30,
+      "preferredGenerator": "RAG",
+      "scoringMethod": "POINTS_BASED",
+      "passingScore": 75.0,
+      "contentSources": [
+        "textbooks/biology/campbell_biology_ch7.pdf",
+        "textbooks/biology/cell_structure_notes.txt",
+        "textbooks/biology/molecular_biology_primer.pdf"
+      ],
+      "customSettings": {
+        "require_source_content": true,
+        "min_content_chunks": 3,
+        "chunk_overlap": 50,
+        "embedding_model": "text-embedding-ada-002"
+      }
+    },
+    
+    "adaptive_math_assessment": {
+      "id": "adaptive_math_assessment",
+      "subject": "Mathematics",
+      "topic": "Calculus",
+      "level": "UNDERGRADUATE",
+      "questionTypes": ["MULTIPLE_CHOICE", "SHORT_ANSWER", "NUMERICAL"],
+      "difficulty": "MEDIUM",
+      "questionCount": 12,
+      "timeLimit": 60,
+      "preferredGenerator": "HYBRID",
+      "scoringMethod": "SCALED",
+      "passingScore": 70.0,
+      "allowPartialCredit": true,
+      "customSettings": {
+        "adaptive_difficulty": true,
+        "difficulty_adjustment_threshold": 0.6,
+        "max_difficulty_change": 1,
+        "include_step_by_step": true
+      }
+    },
+    
+    "graduate_research_methods": {
+      "id": "graduate_research_methods",
+      "subject": "Research Methods",
+      "level": "GRADUATE",
+      "questionTypes": ["ESSAY", "SHORT_ANSWER", "MULTIPLE_CHOICE"],
+      "difficulty": "VERY_HARD",
+      "questionCount": 8,
+      "timeLimit": 120,
+      "preferredGenerator": "HYBRID",
+      "scoringMethod": "RUBRIC",
+      "passingScore": 85.0,
+      "allowPartialCredit": true,
+      "customSettings": {
+        "require_references": true,
+        "min_word_count_essay": 500,
+        "evaluation_criteria": [
+          "methodological_understanding",
+          "critical_analysis",
+          "research_design",
+          "ethical_considerations"
+        ]
+      }
+    },
+    
+    "quick_practice_quiz": {
+      "id": "quick_practice_quiz",
+      "questionTypes": ["MULTIPLE_CHOICE", "TRUE_FALSE"],
+      "difficulty": "MEDIUM",
+      "questionCount": 5,
+      "timeLimit": 10,
+      "preferredGenerator": "LLM",
+      "scoringMethod": "PERCENTAGE",
+      "shuffleQuestions": true,
+      "shuffleOptions": true,
+      "customSettings": {
+        "show_immediate_feedback": true,
+        "allow_retakes": true,
+        "practice_mode": true
+      }
+    }
+  },
+  
+  "content_processing_settings": {
+    "chunk_size_words": 500,
+    "chunk_overlap_words": 50,
+    "min_chunk_size": 100,
+    "max_chunk_size": 1000,
+    "supported_formats": [".txt", ".pdf", ".docx", ".md", ".html"],
+    "preprocessing": {
+      "remove_headers_footers": true,
+      "clean_whitespace": true,
+      "extract_figures": false,
+      "preserve_formatting": true
+    }
+  },
+  
+  "llm_settings": {
+    "default_model": "gpt-3.5-turbo",
+    "temperature": 0.7,
+    "max_tokens": 500,
+    "top_p": 0.9,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "timeout_seconds": 30,
+    "retry_attempts": 3
+  },
+  
+  "vector_search_settings": {
+    "similarity_threshold": 0.7,
+    "max_results": 20,
+    "rerank_results": true,
+    "include_metadata": true,
+    "search_timeout_ms": 5000
+  },
+  
+  "validation_rules": {
+    "min_question_length": 10,
+    "max_question_length": 500,
+    "min_options_mcq": 3,
+    "max_options_mcq": 6,
+    "require_explanation": true,
+    "check_educational_appropriateness": true,
+    "validate_grammar": true
+  }
+}
